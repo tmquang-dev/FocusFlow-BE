@@ -59,17 +59,12 @@ const userSchema = new mongoose.Schema(
 );
 
 // Mongoose pre-save middleware to hash password
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password_hash') || !this.password_hash) {
-    return next();
+    return;
   }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password_hash = await bcrypt.hash(this.password_hash, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  const salt = await bcrypt.genSalt(10);
+  this.password_hash = await bcrypt.hash(this.password_hash, salt);
 });
 
 // Instance method to check password validity

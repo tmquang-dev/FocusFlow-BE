@@ -53,22 +53,17 @@ const taskSchema = new mongoose.Schema(
 taskSchema.index({ workspace_id: 1, task_num: 1 }, { unique: true });
 
 // Pre-save hook to automatically assign incremented task_num for new tasks
-taskSchema.pre('save', async function (next) {
+taskSchema.pre('save', async function () {
   if (!this.isNew) {
-    return next();
+    return;
   }
 
-  try {
-    const counter = await Counter.findByIdAndUpdate(
-      this.workspace_id,
-      { $inc: { seq_value: 1 } },
-      { new: true, upsert: true }
-    );
-    this.task_num = counter.seq_value;
-    next();
-  } catch (error) {
-    next(error);
-  }
+  const counter = await Counter.findByIdAndUpdate(
+    this.workspace_id,
+    { $inc: { seq_value: 1 } },
+    { new: true, upsert: true }
+  );
+  this.task_num = counter.seq_value;
 });
 
 const Task = mongoose.model('Task', taskSchema);
