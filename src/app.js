@@ -1,8 +1,8 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-// const routes = require('./routes');
-// const errorMiddleware = require('./middlewares/error.middleware');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+// import routes from './routes/index.js';
+// import errorMiddleware from './middlewares/error.middleware.js';
 
 const app = express();
 
@@ -17,4 +17,4 @@ app.use(express.json());
 // Middleware xử lý lỗi tập trung (Luôn đặt ở cuối cùng)
 // app.use(errorMiddleware);
 
-module.exports = app;
+export default app;
