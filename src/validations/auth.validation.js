@@ -40,3 +40,28 @@ export const completeRegisterSchema = z.object({
       path: ['confirm_password'],
     }),
 });
+
+export const loginSchema = z.object({
+  body: z.object({
+    email: z
+      .string()
+      .min(1, 'Email là bắt buộc')
+      .email('Định dạng email không hợp lệ'),
+    password: z
+      .string()
+      .min(1, 'Mật khẩu là bắt buộc'),
+  }),
+});
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z
+      .string()
+      .min(1, 'Email là bắt buộc')
+      .email('Định dạng email không hợp lệ'),
+  }),
+});
+
+export const verifyPasswordOtpSchema = verifyOtpSchema;
+
+export const resetPasswordSchema = completeRegisterSchema;

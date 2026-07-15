@@ -50,3 +50,63 @@ export const completeRegister = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+/**
+ * Đăng nhập
+ */
+export const login = catchAsync(async (req, res) => {
+  const { email, password } = req.body;
+  const result = await authService.login(email, password);
+
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
+});
+
+/**
+ * Gửi mã OTP khôi phục mật khẩu
+ */
+export const forgotPassword = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  await authService.forgotPassword(email);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Mã OTP đặt lại mật khẩu đã được gửi.',
+  });
+});
+
+/**
+ * Xác thực OTP khôi phục mật khẩu
+ */
+export const verifyPasswordOtp = catchAsync(async (req, res) => {
+  const { email, code } = req.body;
+  const resetToken = await authService.verifyPasswordOtp(email, code);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      reset_token: resetToken,
+    },
+  });
+});
+
+/**
+ * Đặt lại mật khẩu mới
+ */
+export const resetPassword = catchAsync(async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new ApiError(401, 'UNAUTHORIZED', 'Mã token khôi phục bị thiếu hoặc không đúng định dạng.');
+  }
+  const resetToken = authHeader.split(' ')[1];
+
+  const { password } = req.body;
+  await authService.resetPassword(resetToken, password);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Mật khẩu của bạn đã được cập nhật thành công. Vui lòng đăng nhập lại.',
+  });
+});
