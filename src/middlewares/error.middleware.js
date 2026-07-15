@@ -1,6 +1,6 @@
 import ApiError from '../utils/ApiError.js';
 
-const errorMiddleware = (err, req, res, next) => {
+const errorMiddleware = (err, req, res, _next) => {
   let error = err;
 
   // Handle MongoDB duplicate key errors (code 11000)
@@ -10,7 +10,8 @@ const errorMiddleware = (err, req, res, next) => {
       field === 'email'
         ? 'Email này đã được sử dụng để đăng ký.'
         : `${field} đã tồn tại trong hệ thống.`;
-    const code = field === 'email' ? 'EMAIL_ALREADY_EXISTS' : 'DUPLICATE_KEY_ERROR';
+    const code =
+      field === 'email' ? 'EMAIL_ALREADY_EXISTS' : 'DUPLICATE_KEY_ERROR';
     error = new ApiError(400, code, message);
   }
 
@@ -36,7 +37,13 @@ const errorMiddleware = (err, req, res, next) => {
     const statusCode = error.statusCode || 500;
     const message = error.message || 'Lỗi hệ thống nội bộ.';
     // In production, you might want to hide internal stack trace
-    error = new ApiError(statusCode, 'INTERNAL_SERVER_ERROR', message, false, err.stack);
+    error = new ApiError(
+      statusCode,
+      'INTERNAL_SERVER_ERROR',
+      message,
+      false,
+      err.stack
+    );
   }
 
   const { statusCode, errorCode, message } = error;

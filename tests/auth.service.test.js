@@ -1,11 +1,13 @@
-import { jest } from '@jest/globals';
+/* global describe, beforeEach, it, expect, jest */
 import jwt from 'jsonwebtoken';
 import * as authService from '../src/services/auth.service.js';
 import { User, Workspace, Task, Otp } from '../src/models/index.js';
 import ApiError from '../src/utils/ApiError.js';
 
-const JWT_REGISTRATION_SECRET = process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
-const JWT_RESET_SECRET = process.env.JWT_RESET_SECRET || 'temp_reset_secret_key';
+const JWT_REGISTRATION_SECRET =
+  process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
+const JWT_RESET_SECRET =
+  process.env.JWT_RESET_SECRET || 'temp_reset_secret_key';
 
 describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
   beforeEach(() => {
@@ -43,7 +45,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
     it('nên xóa OTP và trả về registration_token nếu khớp', async () => {
       const email = 'user@gmail.com';
       const code = '123456';
-      jest.spyOn(Otp, 'findOne').mockResolvedValue({ _id: 'otp_id', email, code });
+      jest
+        .spyOn(Otp, 'findOne')
+        .mockResolvedValue({ _id: 'otp_id', email, code });
       jest.spyOn(Otp, 'deleteOne').mockResolvedValue({});
 
       const token = await authService.verifyOtp(email, code);
@@ -55,7 +59,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
     it('nên ném lỗi ApiError INVALID_OTP nếu mã OTP không chính xác', async () => {
       jest.spyOn(Otp, 'findOne').mockResolvedValue(null);
 
-      await expect(authService.verifyOtp('user@gmail.com', '000000')).rejects.toThrow(ApiError);
+      await expect(
+        authService.verifyOtp('user@gmail.com', '000000')
+      ).rejects.toThrow(ApiError);
     });
   });
 
@@ -67,7 +73,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
     const email = 'developer.lam@gmail.com';
 
     beforeEach(() => {
-      registrationToken = jwt.sign({ email }, JWT_REGISTRATION_SECRET, { expiresIn: '10m' });
+      registrationToken = jwt.sign({ email }, JWT_REGISTRATION_SECRET, {
+        expiresIn: '10m',
+      });
     });
 
     it('nên tạo User, Workspace và các Task onboarding thành công', async () => {
@@ -76,10 +84,15 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       jest.spyOn(User, 'findOne').mockResolvedValue(null);
       jest.spyOn(User, 'create').mockResolvedValue(mockUser);
-      jest.spyOn(Workspace, 'create').mockResolvedValue({ _id: 'ws_id', name: 'Workspace 1' });
+      jest
+        .spyOn(Workspace, 'create')
+        .mockResolvedValue({ _id: 'ws_id', name: 'Workspace 1' });
       jest.spyOn(Task, 'create').mockResolvedValue([]);
 
-      const result = await authService.completeRegister(registrationToken, password);
+      const result = await authService.completeRegister(
+        registrationToken,
+        password
+      );
 
       expect(result.access_token).toBeDefined();
       expect(result.user).toEqual({
@@ -127,7 +140,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
 
-      await expect(authService.login('developer.lam@gmail.com', 'wrong_pass')).rejects.toThrow(ApiError);
+      await expect(
+        authService.login('developer.lam@gmail.com', 'wrong_pass')
+      ).rejects.toThrow(ApiError);
     });
 
     it('nên ném lỗi SOCIAL_LOGIN_REQUIRED nếu tài khoản là Google OAuth', async () => {
@@ -138,7 +153,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
 
-      await expect(authService.login('developer.lam@gmail.com', 'pass123')).rejects.toThrow(ApiError);
+      await expect(
+        authService.login('developer.lam@gmail.com', 'pass123')
+      ).rejects.toThrow(ApiError);
     });
   });
 
@@ -160,7 +177,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
     it('nên ném lỗi EMAIL_NOT_FOUND nếu email chưa đăng ký', async () => {
       jest.spyOn(User, 'findOne').mockResolvedValue(null);
 
-      await expect(authService.forgotPassword('unknown@gmail.com')).rejects.toThrow(ApiError);
+      await expect(
+        authService.forgotPassword('unknown@gmail.com')
+      ).rejects.toThrow(ApiError);
     });
   });
 
@@ -171,7 +190,9 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
     it('nên trả về reset_token và xóa OTP nếu trùng khớp', async () => {
       const email = 'developer.lam@gmail.com';
       const code = '654321';
-      jest.spyOn(Otp, 'findOne').mockResolvedValue({ _id: 'otp_id', email, code });
+      jest
+        .spyOn(Otp, 'findOne')
+        .mockResolvedValue({ _id: 'otp_id', email, code });
       jest.spyOn(Otp, 'deleteOne').mockResolvedValue({});
 
       const token = await authService.verifyPasswordOtp(email, code);

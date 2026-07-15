@@ -47,6 +47,9 @@ const pomodoroSessionSchema = new mongoose.Schema(
   }
 );
 
-const PomodoroSession = mongoose.model('PomodoroSession', pomodoroSessionSchema);
+const PomodoroSession = mongoose.model(
+  'PomodoroSession',
+  pomodoroSessionSchema
+);
 
 export default PomodoroSession;

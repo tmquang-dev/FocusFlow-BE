@@ -1,0 +1,40 @@
+name: Continuous Integration (CI)
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      PORT: 3000
+      MONGODB_URI: mongodb://127.0.0.1:27017/focusflow_test
+      JWT_REGISTRATION_SECRET: github_actions_ci_temp_reg_secret
+      JWT_ACCESS_SECRET: github_actions_ci_temp_access_secret
+      JWT_RESET_SECRET: github_actions_ci_temp_reset_secret
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code linting
+        run: npm run lint
+
+      - name: Check code formatting (Prettier)
+        run: npx prettier --check .
+
+      - name: Run Unit & Integration Tests
+        run: npm test

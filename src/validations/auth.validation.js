@@ -31,9 +31,7 @@ export const completeRegisterSchema = z.object({
         .min(1, 'Mật khẩu là bắt buộc')
         .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
         .max(100, 'Mật khẩu không được dài quá 100 ký tự'),
-      confirm_password: z
-        .string()
-        .min(1, 'Xác nhận mật khẩu là bắt buộc'),
+      confirm_password: z.string().min(1, 'Xác nhận mật khẩu là bắt buộc'),
     })
     .refine((data) => data.password === data.confirm_password, {
       message: 'Mật khẩu xác nhận không trùng khớp',
@@ -47,9 +45,7 @@ export const loginSchema = z.object({
       .string()
       .min(1, 'Email là bắt buộc')
       .email('Định dạng email không hợp lệ'),
-    password: z
-      .string()
-      .min(1, 'Mật khẩu là bắt buộc'),
+    password: z.string().min(1, 'Mật khẩu là bắt buộc'),
   }),
 });
 

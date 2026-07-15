@@ -8,7 +8,8 @@ const ipLimits = new Map();
  * Middleware ngăn ngừa spam gửi OTP bằng email và IP
  */
 export const otpRateLimiter = async (req, res, next) => {
-  const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const ip =
+    req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const { email } = req.body;
   const now = Date.now();
 
