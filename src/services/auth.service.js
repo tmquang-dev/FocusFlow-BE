@@ -56,8 +56,12 @@ export const sendOtp = async (email) => {
  * @returns {Promise<string>} registrationToken
  */
 export const verifyOtp = async (email, code) => {
-  // 1. Tìm OTP trong DB
-  const otpRecord = await Otp.findOne({ email, code });
+  // 1. Tìm OTP trong DB (yêu cầu còn hiệu lực)
+  const otpRecord = await Otp.findOne({
+    email,
+    code,
+    expires_at: { $gt: new Date() },
+  });
   if (!otpRecord) {
     throw new ApiError(400, 'INVALID_OTP', 'Mã OTP không chính xác hoặc đã hết hạn.');
   }
@@ -248,8 +252,12 @@ export const forgotPassword = async (email) => {
  * @returns {Promise<string>} resetToken
  */
 export const verifyPasswordOtp = async (email, code) => {
-  // 1. Tìm OTP trong DB
-  const otpRecord = await Otp.findOne({ email, code });
+  // 1. Tìm OTP trong DB (yêu cầu còn hiệu lực)
+  const otpRecord = await Otp.findOne({
+    email,
+    code,
+    expires_at: { $gt: new Date() },
+  });
   if (!otpRecord) {
     throw new ApiError(400, 'INVALID_OTP', 'Mã OTP không chính xác hoặc đã hết hạn.');
   }
