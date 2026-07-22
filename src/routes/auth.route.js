@@ -2,6 +2,7 @@ import express from 'express';
 import validate from '../middlewares/validate.middleware.js';
 import {
   sendOtpSchema,
+  resendOtpSchema,
   verifyOtpSchema,
   completeRegisterSchema,
   loginSchema,
@@ -22,9 +23,9 @@ router.post(
 );
 router.post(
   '/register/resend-otp',
-  validate(sendOtpSchema),
+  validate(resendOtpSchema),
   otpRateLimiter,
-  authController.sendOtp
+  authController.resendRegisterOtp
 );
 router.post(
   '/register/verify-otp',
@@ -46,10 +47,11 @@ router.post(
 );
 router.post(
   '/password/resend-otp',
-  validate(forgotPasswordSchema),
+  validate(resendOtpSchema),
   otpRateLimiter,
-  authController.forgotPassword
+  authController.resendPasswordOtp
 );
+
 router.post(
   '/password/verify-otp',
   validate(verifyPasswordOtpSchema),
