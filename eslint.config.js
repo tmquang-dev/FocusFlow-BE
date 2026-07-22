@@ -76,7 +76,21 @@ export default [
   },
 
   // ==========================================
-  // 6. TRÁNH XUNG ĐỘT ĐỊNH DẠNG: Override các rule xung đột với Prettier (Nếu có dùng)
+  // 6. CẤU HÌNH CHO CÁC TỆP TIN KIỂM THỬ (JEST)
+  // ==========================================
+  {
+    files: ['tests/**/*.js', '**/*.test.js', '**/*.spec.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+    },
+  },
+
+  // ==========================================
+  // 7. TRÁNH XUNG ĐỘT ĐỊNH DẠNG: Override các rule xung đột với Prettier
   // ==========================================
   eslintConfigPrettier,
 ];
+
