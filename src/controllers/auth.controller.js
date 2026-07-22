@@ -16,6 +16,20 @@ export const sendOtp = catchAsync(async (req, res) => {
 });
 
 /**
+ * Gửi lại mã OTP đăng ký (Resend Register OTP)
+ */
+export const resendRegisterOtp = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  await authService.sendOtp(email);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Mã OTP đăng ký đã được gửi lại thành công qua email.',
+  });
+});
+
+
+/**
  * Xác thực mã OTP
  */
 export const verifyOtp = catchAsync(async (req, res) => {
@@ -83,6 +97,20 @@ export const forgotPassword = catchAsync(async (req, res) => {
     message: 'Mã OTP đặt lại mật khẩu đã được gửi.',
   });
 });
+
+/**
+ * Gửi lại mã OTP khôi phục mật khẩu (Resend Password OTP)
+ */
+export const resendPasswordOtp = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  await authService.forgotPassword(email);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Mã OTP khôi phục mật khẩu đã được gửi lại thành công.',
+  });
+});
+
 
 /**
  * Xác thực OTP khôi phục mật khẩu
