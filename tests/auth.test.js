@@ -1,9 +1,11 @@
-/* global describe, beforeEach, it, expect, jest */
 /* eslint-disable n/no-unpublished-import */
+import { describe, beforeEach, it, expect, jest } from '@jest/globals';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
 import { User, Workspace, Task, Otp } from '../src/models/index.js';
+
+
 
 const JWT_REGISTRATION_SECRET =
   process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
@@ -48,7 +50,11 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
+      expect(res.body.message).toBe(
+        'Mã OTP đăng ký đã được gửi lại thành công qua email.'
+      );
     });
+
 
     it('Verify Register OTP: Xác thực mã OTP đăng ký thành công và nhận registration_token', async () => {
       const mockOtp = {
@@ -126,6 +132,9 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
+      expect(res.body.message).toBe(
+        'Mã OTP khôi phục mật khẩu đã được gửi lại thành công.'
+      );
     });
 
     it('Forgot Pass verify: Xác thực OTP khôi phục thành công và nhận reset_token', async () => {

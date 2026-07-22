@@ -1,8 +1,12 @@
-/* global describe, beforeEach, it, expect, jest */
+/* eslint-disable n/no-unpublished-import */
+import { describe, beforeEach, it, expect, jest } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 import * as authService from '../src/services/auth.service.js';
 import { User, Workspace, Task, Otp } from '../src/models/index.js';
 import ApiError from '../src/utils/ApiError.js';
+
+
+
 
 const JWT_REGISTRATION_SECRET =
   process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
