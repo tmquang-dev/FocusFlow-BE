@@ -3,7 +3,7 @@ import catchAsync from '../utils/catchAsync.js';
 import ApiError from '../utils/ApiError.js';
 
 /**
- * Gửi mã OTP đăng ký
+ * Send registration OTP code
  */
 export const sendOtp = catchAsync(async (req, res) => {
   const { email } = req.body;
@@ -11,12 +11,12 @@ export const sendOtp = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    message: 'Mã OTP đã được gửi thành công qua email.',
+    message: 'OTP code has been sent successfully via email.',
   });
 });
 
 /**
- * Gửi lại mã OTP đăng ký (Resend Register OTP)
+ * Resend registration OTP code
  */
 export const resendRegisterOtp = catchAsync(async (req, res) => {
   const { email } = req.body;
@@ -24,13 +24,12 @@ export const resendRegisterOtp = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    message: 'Mã OTP đăng ký đã được gửi lại thành công qua email.',
+    message: 'Registration OTP code has been resent successfully via email.',
   });
 });
 
-
 /**
- * Xác thực mã OTP
+ * Verify OTP code
  */
 export const verifyOtp = catchAsync(async (req, res) => {
   const { email, code } = req.body;
@@ -45,16 +44,15 @@ export const verifyOtp = catchAsync(async (req, res) => {
 });
 
 /**
- * Hoàn tất đăng ký tài khoản (Đặt mật khẩu)
+ * Complete account registration (Set password)
  */
 export const completeRegister = catchAsync(async (req, res) => {
-  // Trích xuất registration_token từ Authorization header
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new ApiError(
       401,
       'UNAUTHORIZED',
-      'Mã token đăng ký bị thiếu hoặc không đúng định dạng.'
+      'Registration token is missing or invalid.'
     );
   }
   const registrationToken = authHeader.split(' ')[1];
@@ -65,7 +63,6 @@ export const completeRegister = catchAsync(async (req, res) => {
     password
   );
 
-  // Phản hồi thành công với mã 211 Created theo đặc tả yêu cầu
   res.status(211).json({
     status: 'success',
     data: result,
@@ -73,7 +70,7 @@ export const completeRegister = catchAsync(async (req, res) => {
 });
 
 /**
- * Đăng nhập
+ * User Login
  */
 export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
@@ -86,7 +83,7 @@ export const login = catchAsync(async (req, res) => {
 });
 
 /**
- * Gửi mã OTP khôi phục mật khẩu
+ * Send password reset OTP
  */
 export const forgotPassword = catchAsync(async (req, res) => {
   const { email } = req.body;
@@ -94,12 +91,12 @@ export const forgotPassword = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    message: 'Mã OTP đặt lại mật khẩu đã được gửi.',
+    message: 'Password reset OTP code has been sent.',
   });
 });
 
 /**
- * Gửi lại mã OTP khôi phục mật khẩu (Resend Password OTP)
+ * Resend password reset OTP
  */
 export const resendPasswordOtp = catchAsync(async (req, res) => {
   const { email } = req.body;
@@ -107,13 +104,12 @@ export const resendPasswordOtp = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    message: 'Mã OTP khôi phục mật khẩu đã được gửi lại thành công.',
+    message: 'Password reset OTP code has been resent successfully.',
   });
 });
 
-
 /**
- * Xác thực OTP khôi phục mật khẩu
+ * Verify password reset OTP
  */
 export const verifyPasswordOtp = catchAsync(async (req, res) => {
   const { email, code } = req.body;
@@ -128,7 +124,7 @@ export const verifyPasswordOtp = catchAsync(async (req, res) => {
 });
 
 /**
- * Đặt lại mật khẩu mới
+ * Reset new password
  */
 export const resetPassword = catchAsync(async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -136,7 +132,7 @@ export const resetPassword = catchAsync(async (req, res) => {
     throw new ApiError(
       401,
       'UNAUTHORIZED',
-      'Mã token khôi phục bị thiếu hoặc không đúng định dạng.'
+      'Reset token is missing or invalid.'
     );
   }
   const resetToken = authHeader.split(' ')[1];
@@ -147,6 +143,6 @@ export const resetPassword = catchAsync(async (req, res) => {
   res.status(200).json({
     status: 'success',
     message:
-      'Mật khẩu của bạn đã được cập nhật thành công. Vui lòng đăng nhập lại.',
+      'Your password has been updated successfully. Please log in again.',
   });
 });

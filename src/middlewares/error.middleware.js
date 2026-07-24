@@ -8,8 +8,8 @@ const errorMiddleware = (err, req, res, _next) => {
     const field = Object.keys(error.keyValue || {})[0];
     const message =
       field === 'email'
-        ? 'Email này đã được sử dụng để đăng ký.'
-        : `${field} đã tồn tại trong hệ thống.`;
+        ? 'This email address is already registered.'
+        : `${field} already exists in the system.`;
     const code =
       field === 'email' ? 'EMAIL_ALREADY_EXISTS' : 'DUPLICATE_KEY_ERROR';
     error = new ApiError(400, code, message);
@@ -17,26 +17,24 @@ const errorMiddleware = (err, req, res, _next) => {
 
   // Handle Zod validation errors
   if (error.name === 'ZodError') {
-    // Extract first error message or join them
     const combinedMessage = error.issues
       ? error.issues.map((issue) => issue.message).join('. ')
-      : 'Dữ liệu đầu vào không hợp lệ.';
+      : 'Invalid input data.';
     error = new ApiError(400, 'VALIDATION_ERROR', combinedMessage);
   }
 
   // Handle JWT errors
   if (error.name === 'JsonWebTokenError') {
-    error = new ApiError(401, 'INVALID_TOKEN', 'Mã token không hợp lệ.');
+    error = new ApiError(401, 'INVALID_TOKEN', 'Invalid token.');
   }
   if (error.name === 'TokenExpiredError') {
-    error = new ApiError(401, 'TOKEN_EXPIRED', 'Mã token đã hết hạn.');
+    error = new ApiError(401, 'TOKEN_EXPIRED', 'Token has expired.');
   }
 
   // Normalize other unexpected errors to ApiError
   if (!(error instanceof ApiError)) {
     const statusCode = error.statusCode || 500;
-    const message = error.message || 'Lỗi hệ thống nội bộ.';
-    // In production, you might want to hide internal stack trace
+    const message = error.message || 'Internal server error.';
     error = new ApiError(
       statusCode,
       'INTERNAL_SERVER_ERROR',
@@ -48,7 +46,6 @@ const errorMiddleware = (err, req, res, _next) => {
 
   const { statusCode, errorCode, message } = error;
 
-  // Log error stack if it's internal server error
   if (statusCode === 500) {
     console.error(err);
   }

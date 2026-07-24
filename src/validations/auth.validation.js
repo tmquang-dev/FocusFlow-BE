@@ -4,8 +4,8 @@ export const sendOtpSchema = z.object({
   body: z.object({
     email: z
       .string()
-      .min(1, 'Email là bắt buộc')
-      .email('Định dạng email không hợp lệ'),
+      .min(1, 'Email is required')
+      .email('Invalid email format'),
   }),
 });
 
@@ -13,13 +13,13 @@ export const verifyOtpSchema = z.object({
   body: z.object({
     email: z
       .string()
-      .min(1, 'Email là bắt buộc')
-      .email('Định dạng email không hợp lệ'),
+      .min(1, 'Email is required')
+      .email('Invalid email format'),
     code: z
       .string()
-      .min(1, 'Mã OTP là bắt buộc')
-      .length(6, 'Mã OTP phải có đúng 6 chữ số')
-      .regex(/^\d+$/, 'Mã OTP chỉ được chứa các chữ số'),
+      .min(1, 'OTP code is required')
+      .length(6, 'OTP code must be exactly 6 digits')
+      .regex(/^\d+$/, 'OTP code must contain digits only'),
   }),
 });
 
@@ -28,13 +28,13 @@ export const completeRegisterSchema = z.object({
     .object({
       password: z
         .string()
-        .min(1, 'Mật khẩu là bắt buộc')
-        .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
-        .max(100, 'Mật khẩu không được dài quá 100 ký tự'),
-      confirm_password: z.string().min(1, 'Xác nhận mật khẩu là bắt buộc'),
+        .min(1, 'Password is required')
+        .min(8, 'Password must be at least 8 characters')
+        .max(100, 'Password cannot exceed 100 characters'),
+      confirm_password: z.string().min(1, 'Confirm password is required'),
     })
     .refine((data) => data.password === data.confirm_password, {
-      message: 'Mật khẩu xác nhận không trùng khớp',
+      message: 'Passwords do not match',
       path: ['confirm_password'],
     }),
 });
@@ -43,9 +43,9 @@ export const loginSchema = z.object({
   body: z.object({
     email: z
       .string()
-      .min(1, 'Email là bắt buộc')
-      .email('Định dạng email không hợp lệ'),
-    password: z.string().min(1, 'Mật khẩu là bắt buộc'),
+      .min(1, 'Email is required')
+      .email('Invalid email format'),
+    password: z.string().min(1, 'Password is required'),
   }),
 });
 
@@ -53,8 +53,8 @@ export const forgotPasswordSchema = z.object({
   body: z.object({
     email: z
       .string()
-      .min(1, 'Email là bắt buộc')
-      .email('Định dạng email không hợp lệ'),
+      .min(1, 'Email is required')
+      .email('Invalid email format'),
   }),
 });
 
@@ -63,4 +63,3 @@ export const verifyPasswordOtpSchema = verifyOtpSchema;
 export const resetPasswordSchema = completeRegisterSchema;
 
 export const resendOtpSchema = sendOtpSchema;
-
