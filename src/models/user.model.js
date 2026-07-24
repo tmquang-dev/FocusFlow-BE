@@ -44,9 +44,10 @@ const userSchema = new mongoose.Schema(
     },
     provider_id: {
       type: String,
-      unique: true,
-      sparse: true, // Allows multiple null values for local users
-      default: null,
+      index: {
+        unique: true,
+        partialFilterExpression: { provider_id: { $type: 'string' } },
+      },
     },
     is_verified: {
       type: Boolean,
