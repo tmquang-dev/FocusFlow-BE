@@ -5,7 +5,7 @@ import { Otp } from '../models/index.js';
 const ipLimits = new Map();
 
 /**
- * Middleware ngăn ngừa spam gửi OTP bằng email và IP
+ * Middleware to prevent email & IP OTP spamming
  */
 export const otpRateLimiter = async (req, res, next) => {
   const ip =
@@ -13,11 +13,10 @@ export const otpRateLimiter = async (req, res, next) => {
   const { email } = req.body;
   const now = Date.now();
 
-  // 1. Giới hạn 5 yêu cầu/giờ trên mỗi địa chỉ IP (chống botnet)
+  // 1. Limit 5 requests/hour per IP address
   let ipRecord = ipLimits.get(ip);
   if (ipRecord) {
     if (now > ipRecord.resetTime) {
-      // Reset khi vượt quá 1 giờ
       ipLimits.set(ip, { count: 1, resetTime: now + 60 * 60 * 1000 });
     } else {
       if (ipRecord.count >= 5) {
@@ -25,7 +24,7 @@ export const otpRateLimiter = async (req, res, next) => {
           new ApiError(
             429,
             'IP_RATE_LIMIT_EXCEEDED',
-            'Bạn đã yêu cầu gửi OTP quá giới hạn cho phép từ IP này. Vui lòng thử lại sau 1 giờ.'
+            'You have exceeded the OTP request limit from this IP address. Please try again after 1 hour.'
           )
         );
       }
@@ -35,7 +34,7 @@ export const otpRateLimiter = async (req, res, next) => {
     ipLimits.set(ip, { count: 1, resetTime: now + 60 * 60 * 1000 });
   }
 
-  // 2. Giới hạn 1 yêu cầu/phút đối với cùng một địa chỉ email
+  // 2. Limit 1 request/minute for the same email address
   if (email) {
     try {
       const existingOtp = await Otp.findOne({ email });
@@ -44,13 +43,12 @@ export const otpRateLimiter = async (req, res, next) => {
         const timeElapsed = now - createdAt;
 
         if (timeElapsed < 60 * 1000) {
-          // Còn lại số giây cần chờ
           const secondsRemaining = Math.ceil((60 * 1000 - timeElapsed) / 1000);
           return next(
             new ApiError(
               429,
               'TOO_MANY_REQUESTS',
-              `Vui lòng đợi ${secondsRemaining} giây trước khi yêu cầu gửi lại mã OTP mới.`
+              `Please wait ${secondsRemaining} seconds before requesting a new OTP code.`
             )
           );
         }
