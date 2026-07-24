@@ -5,8 +5,6 @@ import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
 import { User, Workspace, Task, Otp } from '../src/models/index.js';
 
-
-
 const JWT_REGISTRATION_SECRET =
   process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
 const JWT_RESET_SECRET =
@@ -28,7 +26,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
   });
 
   // ==========================================
-  // API 3.1.1 & 3.1.2 & 3.1.3: LUỒNG ĐĂNG KÝ
+  // REGISTER FLOW
   // ==========================================
   describe('Đăng ký tài khoản (Register Flow)', () => {
     it('Register OTP: Gửi OTP thành công cho email hợp lệ', async () => {
@@ -39,7 +37,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({
         status: 'success',
-        message: 'Mã OTP đã được gửi thành công qua email.',
+        message: 'OTP code has been sent successfully via email.',
       });
     });
 
@@ -51,10 +49,9 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
       expect(res.body.message).toBe(
-        'Mã OTP đăng ký đã được gửi lại thành công qua email.'
+        'Registration OTP code has been resent successfully via email.'
       );
     });
-
 
     it('Verify Register OTP: Xác thực mã OTP đăng ký thành công và nhận registration_token', async () => {
       const mockOtp = {
@@ -102,7 +99,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
   });
 
   // ==========================================
-  // API 3.2: LUỒNG KHÔI PHỤC MẬT KHẨU
+  // FORGOT / RESET PASSWORD FLOW
   // ==========================================
   describe('Khôi phục mật khẩu (Forgot/Reset Password Flow)', () => {
     it('Forgot Pass: Yêu cầu khôi phục mật khẩu gửi OTP thành công', async () => {
@@ -117,7 +114,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({
         status: 'success',
-        message: 'Mã OTP đặt lại mật khẩu đã được gửi.',
+        message: 'Password reset OTP code has been sent.',
       });
     });
 
@@ -133,7 +130,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
       expect(res.body.message).toBe(
-        'Mã OTP khôi phục mật khẩu đã được gửi lại thành công.'
+        'Password reset OTP code has been resent successfully.'
       );
     });
 
@@ -179,14 +176,14 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.body).toEqual({
         status: 'success',
         message:
-          'Mật khẩu của bạn đã được cập nhật thành công. Vui lòng đăng nhập lại.',
+          'Your password has been updated successfully. Please log in again.',
       });
       expect(mockUser.password_hash).toBe('NewSecurePassword123!');
     });
   });
 
   // ==========================================
-  // API 3.3: LUỒNG ĐĂNG NHẬP
+  // LOGIN FLOW
   // ==========================================
   describe('Đăng nhập (Login Flow)', () => {
     it('Login: Đăng nhập thành công với thông tin chính xác', async () => {
@@ -261,7 +258,6 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
   // ==========================================
   describe('Phòng ngừa Spam Email OTP (Rate Limiting)', () => {
     it('Email Limit: Chặn yêu cầu gửi OTP lần 2 trong vòng 60 giây đối với cùng email', async () => {
-      // Giả lập OTP tồn tại và được tạo cách đây 10 giây (vẫn nằm trong 60 giây chặn)
       const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
       const mockOtp = {
         email: 'developer.lam@gmail.com',
@@ -277,19 +273,17 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(429);
       expect(res.body.status).toBe('error');
       expect(res.body.code).toBe('TOO_MANY_REQUESTS');
-      expect(res.body.message).toContain('Vui lòng đợi');
+      expect(res.body.message).toContain('Please wait');
     });
 
     it('IP Limit: Chặn yêu cầu gửi OTP nếu vượt quá 5 lần/giờ từ cùng một địa chỉ IP', async () => {
-      // Tạo 5 yêu cầu đầu tiên thành công
       for (let i = 0; i < 5; i++) {
         await request(app)
           .post('/api/v1/auth/register/send-otp')
-          .set('X-Forwarded-For', '192.168.1.100') // giả lập cùng một IP
+          .set('X-Forwarded-For', '192.168.1.100')
           .send({ email: `user${i}@gmail.com` });
       }
 
-      // Yêu cầu thứ 6 từ cùng IP phải bị chặn
       const res = await request(app)
         .post('/api/v1/auth/register/send-otp')
         .set('X-Forwarded-For', '192.168.1.100')
@@ -298,7 +292,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(429);
       expect(res.body.status).toBe('error');
       expect(res.body.code).toBe('IP_RATE_LIMIT_EXCEEDED');
-      expect(res.body.message).toContain('Bạn đã yêu cầu gửi OTP quá giới hạn');
+      expect(res.body.message).toContain('You have exceeded the OTP request limit');
     });
   });
 });
