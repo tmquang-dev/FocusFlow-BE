@@ -63,7 +63,7 @@ export const sendOtp = async (email) => {
   // 3. Save or update OTP in DB (upsert)
   await Otp.findOneAndUpdate(
     { email },
-    { code, expires_at: expiresAt, attempts: 0 },
+    { code, expires_at: expiresAt, attempts: 0, type: 'register' },
     { upsert: true, new: true }
   );
 
@@ -100,6 +100,7 @@ export const sendOtp = async (email) => {
 export const verifyOtp = async (email, code) => {
   const otpRecord = await Otp.findOne({
     email,
+    type: 'register',
     expires_at: { $gt: new Date() },
   });
 
@@ -309,7 +310,7 @@ export const forgotPassword = async (email) => {
 
   await Otp.findOneAndUpdate(
     { email },
-    { code, expires_at: expiresAt, attempts: 0 },
+    { code, expires_at: expiresAt, attempts: 0, type: 'forgot_password' },
     { upsert: true, new: true }
   );
 
@@ -344,6 +345,7 @@ export const forgotPassword = async (email) => {
 export const verifyPasswordOtp = async (email, code) => {
   const otpRecord = await Otp.findOne({
     email,
+    type: 'forgot_password',
     expires_at: { $gt: new Date() },
   });
 
