@@ -2,6 +2,12 @@ import * as authService from '../services/auth.service.js';
 import catchAsync from '../utils/catchAsync.js';
 import ApiError from '../utils/ApiError.js';
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+};
+
 /**
  * Send registration OTP code
  */
@@ -63,9 +69,20 @@ export const completeRegister = catchAsync(async (req, res) => {
     password
   );
 
+  res.cookie('access_token', result.accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie('refresh_token', result.refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
   res.status(211).json({
     status: 'success',
-    data: result,
+    data: {
+      user: result.user,
+    },
   });
 });
 
@@ -76,9 +93,63 @@ export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   const result = await authService.login(email, password);
 
+  res.cookie('access_token', result.accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie('refresh_token', result.refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
   res.status(200).json({
     status: 'success',
-    data: result,
+    data: {
+      user: result.user,
+    },
+  });
+});
+
+/**
+ * Refresh Token handler
+ */
+export const refreshToken = catchAsync(async (req, res) => {
+  const token = req.cookies.refresh_token || req.body.refresh_token;
+  if (!token) {
+    throw new ApiError(
+      401,
+      'REFRESH_TOKEN_REQUIRED',
+      'Refresh token is required.'
+    );
+  }
+
+  const result = await authService.refreshTokens(token);
+
+  res.cookie('access_token', result.accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie('refresh_token', result.refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Tokens refreshed successfully.',
+  });
+});
+
+/**
+ * User Logout handler
+ */
+export const logout = catchAsync(async (req, res) => {
+  res.clearCookie('access_token', cookieOptions);
+  res.clearCookie('refresh_token', cookieOptions);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully.',
   });
 });
 

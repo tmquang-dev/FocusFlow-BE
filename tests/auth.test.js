@@ -94,7 +94,8 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       expect(res.status).toBe(211);
       expect(res.body.status).toBe('success');
-      expect(res.body.data.access_token).toBeDefined();
+      expect(res.body.data.user).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined();
     });
   });
 
@@ -197,20 +198,22 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
 
-      const res = await request(app)
-        .post('/api/v1/auth/login')
-        .send({
-          email: 'developer.lam@gmail.com',
-          password: 'SecurePassword123!',
-        });
+      const res = await request(app).post('/api/v1/auth/login').send({
+        email: 'developer.lam@gmail.com',
+        password: 'SecurePassword123!',
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
-      expect(res.body.data.access_token).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined();
       expect(res.body.data.user).toEqual({
         id: mockUser._id,
         email: mockUser.email,
         full_name: mockUser.full_name,
+        avatar: null,
+        is_verified: false,
+        auth_provider: 'local',
+        created_at: undefined,
       });
     });
 
@@ -223,12 +226,10 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
 
-      const res = await request(app)
-        .post('/api/v1/auth/login')
-        .send({
-          email: 'developer.lam@gmail.com',
-          password: 'SecurePassword123!',
-        });
+      const res = await request(app).post('/api/v1/auth/login').send({
+        email: 'developer.lam@gmail.com',
+        password: 'SecurePassword123!',
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.status).toBe('error');
@@ -292,7 +293,9 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       expect(res.status).toBe(429);
       expect(res.body.status).toBe('error');
       expect(res.body.code).toBe('IP_RATE_LIMIT_EXCEEDED');
-      expect(res.body.message).toContain('You have exceeded the OTP request limit');
+      expect(res.body.message).toContain(
+        'You have exceeded the OTP request limit'
+      );
     });
   });
 });

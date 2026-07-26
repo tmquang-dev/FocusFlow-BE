@@ -5,9 +5,6 @@ import * as authService from '../src/services/auth.service.js';
 import { User, Workspace, Task, Otp } from '../src/models/index.js';
 import ApiError from '../src/utils/ApiError.js';
 
-
-
-
 const JWT_REGISTRATION_SECRET =
   process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
 const JWT_RESET_SECRET =
@@ -67,6 +64,17 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
         authService.verifyOtp('user@gmail.com', '000000')
       ).rejects.toThrow(ApiError);
     });
+
+    it('nên từ chối nếu OTP là của luồng forgot_password', async () => {
+      jest.spyOn(Otp, 'findOne').mockImplementation((query) => {
+        if (query.type === 'register') return Promise.resolve(null);
+        return Promise.resolve({ _id: 'otp_id', type: 'forgot_password' });
+      });
+
+      await expect(
+        authService.verifyOtp('user@gmail.com', '123456')
+      ).rejects.toThrow(ApiError);
+    });
   });
 
   // ==========================================
@@ -98,11 +106,16 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
         password
       );
 
-      expect(result.access_token).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
       expect(result.user).toEqual({
         id: mockUser._id,
         email: mockUser.email,
         full_name: mockUser.full_name,
+        avatar: null,
+        is_verified: false,
+        auth_provider: undefined,
+        created_at: undefined,
       });
     });
   });
@@ -126,11 +139,16 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       const result = await authService.login(email, password);
 
-      expect(result.access_token).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
       expect(result.user).toEqual({
         id: mockUser._id,
         email: mockUser.email,
         full_name: mockUser.full_name,
+        avatar: null,
+        is_verified: false,
+        auth_provider: 'local',
+        created_at: undefined,
       });
       expect(mockUser.comparePassword).toHaveBeenCalledWith(password);
     });
@@ -203,6 +221,17 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       expect(token).toBeDefined();
       expect(Otp.deleteOne).toHaveBeenCalledWith({ _id: 'otp_id' });
+    });
+
+    it('nên từ chối nếu OTP là của luồng register', async () => {
+      jest.spyOn(Otp, 'findOne').mockImplementation((query) => {
+        if (query.type === 'forgot_password') return Promise.resolve(null);
+        return Promise.resolve({ _id: 'otp_id', type: 'register' });
+      });
+
+      await expect(
+        authService.verifyPasswordOtp('developer.lam@gmail.com', '654321')
+      ).rejects.toThrow(ApiError);
     });
   });
 

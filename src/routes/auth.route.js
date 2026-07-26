@@ -11,7 +11,10 @@ import {
   resetPasswordSchema,
 } from '../validations/auth.validation.js';
 import * as authController from '../controllers/auth.controller.js';
-import { otpRateLimiter } from '../middlewares/rate-limit.middleware.js';
+import {
+  otpRateLimiter,
+  verifyOtpRateLimiter,
+} from '../middlewares/rate-limit.middleware.js';
 
 const router = express.Router();
 
@@ -30,6 +33,7 @@ router.post(
 router.post(
   '/register/verify-otp',
   validate(verifyOtpSchema),
+  verifyOtpRateLimiter,
   authController.verifyOtp
 );
 router.post(
@@ -39,6 +43,9 @@ router.post(
 );
 
 router.post('/login', validate(loginSchema), authController.login);
+router.post('/logout', authController.logout);
+router.post('/refresh-token', authController.refreshToken);
+
 router.post(
   '/password/forgot',
   validate(forgotPasswordSchema),
@@ -51,10 +58,10 @@ router.post(
   otpRateLimiter,
   authController.resendPasswordOtp
 );
-
 router.post(
   '/password/verify-otp',
   validate(verifyPasswordOtpSchema),
+  verifyOtpRateLimiter,
   authController.verifyPasswordOtp
 );
 router.post(

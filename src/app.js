@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 
@@ -15,6 +16,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // Gắn toàn bộ Routes API bắt đầu bằng /api/v1
 app.use('/api/v1', routes);

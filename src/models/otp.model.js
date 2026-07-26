@@ -19,6 +19,15 @@ const otpSchema = new mongoose.Schema(
       // TTL Index: deletes document when current time matches or exceeds expires_at
       index: { expires: 0 },
     },
+    attempts: {
+      type: Number,
+      default: 0,
+    },
+    type: {
+      type: String,
+      enum: ['register', 'forgot_password'],
+      required: true,
+    },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: false },

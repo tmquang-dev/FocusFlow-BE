@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
-import { User, Workspace, Task, Otp } from '../models/index.js';
+import { User, Otp } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
 import {
   getRegisterEmailTemplate,
@@ -21,6 +21,25 @@ const JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'main_access_secret_key';
 const JWT_RESET_SECRET =
   process.env.JWT_RESET_SECRET || 'temp_reset_secret_key';
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET || 'main_refresh_secret_key';
+
+/**
+ * Generate Access Token & Refresh Token pair for user
+ */
+export const generateTokens = (user) => {
+  const accessToken = jwt.sign(
+    { id: user._id, email: user.email },
+    JWT_ACCESS_SECRET,
+    { expiresIn: '15m' }
+  );
+  const refreshToken = jwt.sign(
+    { id: user._id, email: user.email },
+    JWT_REFRESH_SECRET,
+    { expiresIn: '7d' }
+  );
+  return { accessToken, refreshToken };
+};
 
 /**
  * Send registration OTP
@@ -44,7 +63,7 @@ export const sendOtp = async (email) => {
   // 3. Save or update OTP in DB (upsert)
   await Otp.findOneAndUpdate(
     { email },
-    { code, expires_at: expiresAt },
+    { code, expires_at: expiresAt, attempts: 0, type: 'register' },
     { upsert: true, new: true }
   );
 
@@ -73,30 +92,38 @@ export const sendOtp = async (email) => {
 };
 
 /**
- * Verify registration OTP
+ * Verify registration OTP with max attempts safeguard
  * @param {string} email
  * @param {string} code
  * @returns {Promise<string>} registrationToken
  */
 export const verifyOtp = async (email, code) => {
-  // 1. Find valid OTP record in DB
   const otpRecord = await Otp.findOne({
     email,
-    code,
+    type: 'register',
     expires_at: { $gt: new Date() },
   });
+
   if (!otpRecord) {
-    throw new ApiError(
-      400,
-      'INVALID_OTP',
-      'Invalid or expired OTP code.'
-    );
+    throw new ApiError(400, 'INVALID_OTP', 'Invalid or expired OTP code.');
   }
 
-  // 2. Delete OTP record after verification
+  if (otpRecord.code !== code) {
+    otpRecord.attempts = (otpRecord.attempts || 0) + 1;
+    if (otpRecord.attempts >= 5) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      throw new ApiError(
+        400,
+        'MAX_ATTEMPTS_EXCEEDED',
+        'Maximum verification attempts exceeded. Please request a new OTP code.'
+      );
+    }
+    await otpRecord.save();
+    throw new ApiError(400, 'INVALID_OTP', 'Invalid or expired OTP code.');
+  }
+
   await Otp.deleteOne({ _id: otpRecord._id });
 
-  // 3. Generate registration_token (10 minutes)
   const registrationToken = jwt.sign({ email }, JWT_REGISTRATION_SECRET, {
     expiresIn: '10m',
   });
@@ -108,12 +135,11 @@ export const verifyOtp = async (email, code) => {
  * Complete account registration
  * @param {string} registrationToken
  * @param {string} password
- * @returns {Promise<object>} { access_token, user }
+ * @returns {Promise<object>} { accessToken, refreshToken, user }
  */
 export const completeRegister = async (registrationToken, password) => {
   let email;
 
-  // 1. Decode & verify registrationToken
   try {
     const decoded = jwt.verify(registrationToken, JWT_REGISTRATION_SECRET);
     email = decoded.email;
@@ -125,7 +151,6 @@ export const completeRegister = async (registrationToken, password) => {
     );
   }
 
-  // 2. Re-check if user exists (prevent race condition)
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new ApiError(
@@ -135,82 +160,80 @@ export const completeRegister = async (registrationToken, password) => {
     );
   }
 
-  // 3. Extract default full_name from email prefix
   const fullName = email.split('@')[0];
 
-  // 4. Create User (password will be hashed in pre-save hook)
   const user = await User.create({
     email,
     password_hash: password,
     full_name: fullName,
     auth_provider: 'local',
+    is_verified: true,
   });
 
-  // 5. Initialize default onboarding workspace & tasks
-  const workspace = await Workspace.create({
-    name: 'Workspace 1',
-    user_id: user._id,
-  });
+  // const workspace = await Workspace.create({
+  //   name: 'Workspace 1',
+  //   user_id: user._id,
+  // });
 
-  const defaultTasks = [
-    {
-      workspace_id: workspace._id,
-      user_id: user._id,
-      title: 'Welcome to FocusFlow! 🚀',
-      description:
-        'This is your workspace. Try starting a Pomodoro session for this task.',
-      status: 'TO_DO',
-      order: 0,
-    },
-    {
-      workspace_id: workspace._id,
-      user_id: user._id,
-      title: 'Working with Kanban Board 📋',
-      description:
-        'Drag and drop task cards between columns (Backlog, To Do, In Progress, Done) to update task status.',
-      status: 'TO_DO',
-      order: 1,
-    },
-    {
-      workspace_id: workspace._id,
-      user_id: user._id,
-      title: 'Focus with Pomodoro Timer ⏱️',
-      description:
-        'Click the Pomodoro icon to start a 25-minute focus session. System automatically tracks your progress.',
-      status: 'TO_DO',
-      order: 2,
-    },
-  ];
+  // const defaultTasks = [
+  //   {
+  //     workspace_id: workspace._id,
+  //     user_id: user._id,
+  //     title: 'Welcome to FocusFlow! 🚀',
+  //     description:
+  //       'This is your workspace. Try starting a Pomodoro session for this task.',
+  //     status: 'TO_DO',
+  //     order: 0,
+  //   },
+  //   {
+  //     workspace_id: workspace._id,
+  //     user_id: user._id,
+  //     title: 'Working with Kanban Board 📋',
+  //     description:
+  //       'Drag and drop task cards between columns (Backlog, To Do, In Progress, Done) to update task status.',
+  //     status: 'TO_DO',
+  //     order: 1,
+  //   },
+  //   {
+  //     workspace_id: workspace._id,
+  //     user_id: user._id,
+  //     title: 'Focus with Pomodoro Timer ⏱️',
+  //     description:
+  //       'Click the Pomodoro icon to start a 25-minute focus session. System automatically tracks your progress.',
+  //     status: 'TO_DO',
+  //     order: 2,
+  //   },
+  // ];
 
-  await Task.create(defaultTasks);
-
-  // 6. Generate access token (1 day)
-  const accessToken = jwt.sign(
-    { id: user._id, email: user.email },
-    JWT_ACCESS_SECRET,
-    {
-      expiresIn: '1d',
-    }
-  );
+  const { accessToken, refreshToken } = generateTokens(user);
 
   return {
-    access_token: accessToken,
-    user: {
-      id: user._id,
-      email: user.email,
-      full_name: user.full_name,
-    },
+    accessToken,
+    refreshToken,
+    user: formatUser(user),
   };
 };
+
+/**
+ * Helper to format user response consistently
+ */
+export const formatUser = (user) => ({
+  id: user._id,
+  email: user.email,
+  full_name: user.full_name,
+  avatar: user.avatar || null,
+  is_verified: user.is_verified ?? false,
+  auth_provider: user.auth_provider,
+  created_at: user.created_at,
+});
 
 /**
  * User Login
  * @param {string} email
  * @param {string} password
- * @returns {Promise<object>} { access_token, user }
+ * @returns {Promise<object>} { accessToken, refreshToken, user }
  */
 export const login = async (email, password) => {
-  // 1. Find user by email
   const user = await User.findOne({ email });
   if (!user) {
     throw new ApiError(
@@ -220,7 +243,6 @@ export const login = async (email, password) => {
     );
   }
 
-  // 2. Check if account uses social auth provider
   if (user.auth_provider !== 'local') {
     throw new ApiError(
       400,
@@ -229,7 +251,6 @@ export const login = async (email, password) => {
     );
   }
 
-  // 3. Match password
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     throw new ApiError(
@@ -239,23 +260,38 @@ export const login = async (email, password) => {
     );
   }
 
-  // 4. Generate access token (1 day)
-  const accessToken = jwt.sign(
-    { id: user._id, email: user.email },
-    JWT_ACCESS_SECRET,
-    {
-      expiresIn: '1d',
-    }
-  );
+  const { accessToken, refreshToken } = generateTokens(user);
 
   return {
-    access_token: accessToken,
-    user: {
-      id: user._id,
-      email: user.email,
-      full_name: user.full_name,
-    },
+    accessToken,
+    refreshToken,
+    user: formatUser(user),
   };
+};
+
+/**
+ * Refresh Tokens using Refresh Token
+ * @param {string} refreshToken
+ * @returns {Promise<object>} { accessToken, refreshToken }
+ */
+export const refreshTokens = async (refreshToken) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+  } catch {
+    throw new ApiError(
+      401,
+      'INVALID_REFRESH_TOKEN',
+      'Invalid or expired refresh token.'
+    );
+  }
+
+  const user = await User.findById(decoded.id);
+  if (!user) {
+    throw new ApiError(404, 'USER_NOT_FOUND', 'User not found.');
+  }
+
+  return generateTokens(user);
 };
 
 /**
@@ -263,7 +299,6 @@ export const login = async (email, password) => {
  * @param {string} email
  */
 export const forgotPassword = async (email) => {
-  // 1. Find user by email
   const user = await User.findOne({ email });
   if (!user) {
     throw new ApiError(
@@ -273,21 +308,17 @@ export const forgotPassword = async (email) => {
     );
   }
 
-  // 2. Generate 6-digit OTP code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-  // 3. Save or update OTP in DB
   await Otp.findOneAndUpdate(
     { email },
-    { code, expires_at: expiresAt },
+    { code, expires_at: expiresAt, attempts: 0, type: 'forgot_password' },
     { upsert: true, new: true }
   );
 
-  // Log OTP for development & debugging
   console.log(`[OTP FORGOT PASSWORD] OTP code for ${email} is: ${code}`);
 
-  // 4. Send email via Resend
   const resend = getResendClient();
   if (resend) {
     const { error } = await resend.emails.send({
@@ -309,30 +340,38 @@ export const forgotPassword = async (email) => {
 };
 
 /**
- * Verify password reset OTP
+ * Verify password reset OTP with max attempts safeguard
  * @param {string} email
  * @param {string} code
  * @returns {Promise<string>} resetToken
  */
 export const verifyPasswordOtp = async (email, code) => {
-  // 1. Find OTP in DB
   const otpRecord = await Otp.findOne({
     email,
-    code,
+    type: 'forgot_password',
     expires_at: { $gt: new Date() },
   });
+
   if (!otpRecord) {
-    throw new ApiError(
-      400,
-      'INVALID_OTP',
-      'Invalid or expired OTP code.'
-    );
+    throw new ApiError(400, 'INVALID_OTP', 'Invalid or expired OTP code.');
   }
 
-  // 2. Delete OTP record
+  if (otpRecord.code !== code) {
+    otpRecord.attempts = (otpRecord.attempts || 0) + 1;
+    if (otpRecord.attempts >= 5) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      throw new ApiError(
+        400,
+        'MAX_ATTEMPTS_EXCEEDED',
+        'Maximum verification attempts exceeded. Please request a new OTP code.'
+      );
+    }
+    await otpRecord.save();
+    throw new ApiError(400, 'INVALID_OTP', 'Invalid or expired OTP code.');
+  }
+
   await Otp.deleteOne({ _id: otpRecord._id });
 
-  // 3. Generate reset_token (10 minutes)
   const resetToken = jwt.sign({ email }, JWT_RESET_SECRET, {
     expiresIn: '10m',
   });
@@ -348,19 +387,13 @@ export const verifyPasswordOtp = async (email, code) => {
 export const resetPassword = async (resetToken, password) => {
   let email;
 
-  // 1. Decode & verify reset_token
   try {
     const decoded = jwt.verify(resetToken, JWT_RESET_SECRET);
     email = decoded.email;
   } catch {
-    throw new ApiError(
-      401,
-      'INVALID_TOKEN',
-      'Invalid or expired reset token.'
-    );
+    throw new ApiError(401, 'INVALID_TOKEN', 'Invalid or expired reset token.');
   }
 
-  // 2. Find user by email
   const user = await User.findOne({ email });
   if (!user) {
     throw new ApiError(
@@ -370,7 +403,6 @@ export const resetPassword = async (resetToken, password) => {
     );
   }
 
-  // 3. Update new password
   user.password_hash = password;
   await user.save();
 };

@@ -60,3 +60,36 @@ export const otpRateLimiter = async (req, res, next) => {
 
   next();
 };
+
+const verifyLimits = new Map();
+
+/**
+ * Middleware to prevent brute-forcing OTP verification
+ */
+export const verifyOtpRateLimiter = (req, res, next) => {
+  const ip =
+    req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const now = Date.now();
+
+  let record = verifyLimits.get(ip);
+  if (record) {
+    if (now > record.resetTime) {
+      verifyLimits.set(ip, { count: 1, resetTime: now + 60 * 1000 });
+    } else {
+      if (record.count >= 10) {
+        return next(
+          new ApiError(
+            429,
+            'TOO_MANY_VERIFICATION_ATTEMPTS',
+            'Too many OTP verification attempts. Please wait 1 minute before trying again.'
+          )
+        );
+      }
+      record.count += 1;
+    }
+  } else {
+    verifyLimits.set(ip, { count: 1, resetTime: now + 60 * 1000 });
+  }
+
+  next();
+};
