@@ -98,7 +98,8 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
         password
       );
 
-      expect(result.access_token).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
       expect(result.user).toEqual({
         id: mockUser._id,
         email: mockUser.email,
@@ -126,7 +127,8 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       const result = await authService.login(email, password);
 
-      expect(result.access_token).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
       expect(result.user).toEqual({
         id: mockUser._id,
         email: mockUser.email,
