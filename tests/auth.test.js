@@ -94,7 +94,8 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       expect(res.status).toBe(211);
       expect(res.body.status).toBe('success');
-      expect(res.body.data.access_token).toBeDefined();
+      expect(res.body.data.user).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined();
     });
   });
 
@@ -206,7 +207,7 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
-      expect(res.body.data.access_token).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined();
       expect(res.body.data.user).toEqual({
         id: mockUser._id,
         email: mockUser.email,
