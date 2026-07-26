@@ -67,6 +67,17 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
         authService.verifyOtp('user@gmail.com', '000000')
       ).rejects.toThrow(ApiError);
     });
+
+    it('nên từ chối nếu OTP là của luồng forgot_password', async () => {
+      jest.spyOn(Otp, 'findOne').mockImplementation((query) => {
+        if (query.type === 'register') return Promise.resolve(null);
+        return Promise.resolve({ _id: 'otp_id', type: 'forgot_password' });
+      });
+
+      await expect(
+        authService.verifyOtp('user@gmail.com', '123456')
+      ).rejects.toThrow(ApiError);
+    });
   });
 
   // ==========================================
@@ -205,6 +216,17 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
 
       expect(token).toBeDefined();
       expect(Otp.deleteOne).toHaveBeenCalledWith({ _id: 'otp_id' });
+    });
+
+    it('nên từ chối nếu OTP là của luồng register', async () => {
+      jest.spyOn(Otp, 'findOne').mockImplementation((query) => {
+        if (query.type === 'forgot_password') return Promise.resolve(null);
+        return Promise.resolve({ _id: 'otp_id', type: 'register' });
+      });
+
+      await expect(
+        authService.verifyPasswordOtp('developer.lam@gmail.com', '654321')
+      ).rejects.toThrow(ApiError);
     });
   });
 
