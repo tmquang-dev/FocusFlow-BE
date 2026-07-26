@@ -19,6 +19,7 @@ This is the backend server for the FocusFlow application.
 
 3. **Configuration**
    Create a `.env` file in the root directory with the following variables:
+
    ```env
    MONGODB_URI=mongodb://localhost:27017/focusflow
    PORT=5000

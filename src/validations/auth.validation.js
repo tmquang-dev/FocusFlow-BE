@@ -2,19 +2,13 @@ import { z } from 'zod';
 
 export const sendOtpSchema = z.object({
   body: z.object({
-    email: z
-      .string()
-      .min(1, 'Email is required')
-      .email('Invalid email format'),
+    email: z.string().min(1, 'Email is required').email('Invalid email format'),
   }),
 });
 
 export const verifyOtpSchema = z.object({
   body: z.object({
-    email: z
-      .string()
-      .min(1, 'Email is required')
-      .email('Invalid email format'),
+    email: z.string().min(1, 'Email is required').email('Invalid email format'),
     code: z
       .string()
       .min(1, 'OTP code is required')
@@ -41,20 +35,14 @@ export const completeRegisterSchema = z.object({
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z
-      .string()
-      .min(1, 'Email is required')
-      .email('Invalid email format'),
+    email: z.string().min(1, 'Email is required').email('Invalid email format'),
     password: z.string().min(1, 'Password is required'),
   }),
 });
 
 export const forgotPasswordSchema = z.object({
   body: z.object({
-    email: z
-      .string()
-      .min(1, 'Email is required')
-      .email('Invalid email format'),
+    email: z.string().min(1, 'Email is required').email('Invalid email format'),
   }),
 });
 

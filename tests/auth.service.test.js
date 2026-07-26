@@ -5,9 +5,6 @@ import * as authService from '../src/services/auth.service.js';
 import { User, Workspace, Task, Otp } from '../src/models/index.js';
 import ApiError from '../src/utils/ApiError.js';
 
-
-
-
 const JWT_REGISTRATION_SECRET =
   process.env.JWT_REGISTRATION_SECRET || 'temp_registration_secret_key';
 const JWT_RESET_SECRET =

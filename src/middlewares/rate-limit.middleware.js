@@ -93,4 +93,3 @@ export const verifyOtpRateLimiter = (req, res, next) => {
 
   next();
 };
-
