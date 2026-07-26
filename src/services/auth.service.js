@@ -391,11 +391,7 @@ export const resetPassword = async (resetToken, password) => {
     const decoded = jwt.verify(resetToken, JWT_RESET_SECRET);
     email = decoded.email;
   } catch {
-    throw new ApiError(
-      401,
-      'INVALID_TOKEN',
-      'Invalid or expired reset token.'
-    );
+    throw new ApiError(401, 'INVALID_TOKEN', 'Invalid or expired reset token.');
   }
 
   const user = await User.findOne({ email });

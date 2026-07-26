@@ -18,7 +18,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-
 // Gắn toàn bộ Routes API bắt đầu bằng /api/v1
 app.use('/api/v1', routes);
 
