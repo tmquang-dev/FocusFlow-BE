@@ -81,7 +81,6 @@ export const completeRegister = catchAsync(async (req, res) => {
   res.status(211).json({
     status: 'success',
     data: {
-      access_token: result.accessToken,
       user: result.user,
     },
   });
@@ -106,7 +105,6 @@ export const login = catchAsync(async (req, res) => {
   res.status(200).json({
     status: 'success',
     data: {
-      access_token: result.accessToken,
       user: result.user,
     },
   });
@@ -138,9 +136,7 @@ export const refreshToken = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      access_token: result.accessToken,
-    },
+    message: 'Tokens refreshed successfully.',
   });
 });
 
