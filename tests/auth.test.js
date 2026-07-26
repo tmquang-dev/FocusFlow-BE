@@ -212,6 +212,10 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
         id: mockUser._id,
         email: mockUser.email,
         full_name: mockUser.full_name,
+        avatar: null,
+        is_verified: false,
+        auth_provider: 'local',
+        created_at: undefined,
       });
     });
 

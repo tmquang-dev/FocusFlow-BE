@@ -205,20 +205,27 @@ export const completeRegister = async (registrationToken, password) => {
     },
   ];
 
-  await Task.create(defaultTasks);
-
   const { accessToken, refreshToken } = generateTokens(user);
 
   return {
     accessToken,
     refreshToken,
-    user: {
-      id: user._id,
-      email: user.email,
-      full_name: user.full_name,
-    },
+    user: formatUser(user),
   };
 };
+
+/**
+ * Helper to format user response consistently
+ */
+export const formatUser = (user) => ({
+  id: user._id,
+  email: user.email,
+  full_name: user.full_name,
+  avatar: user.avatar || null,
+  is_verified: user.is_verified ?? false,
+  auth_provider: user.auth_provider,
+  created_at: user.created_at,
+});
 
 /**
  * User Login
@@ -258,11 +265,7 @@ export const login = async (email, password) => {
   return {
     accessToken,
     refreshToken,
-    user: {
-      id: user._id,
-      email: user.email,
-      full_name: user.full_name,
-    },
+    user: formatUser(user),
   };
 };
 

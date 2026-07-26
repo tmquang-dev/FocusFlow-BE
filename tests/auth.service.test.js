@@ -115,6 +115,10 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
         id: mockUser._id,
         email: mockUser.email,
         full_name: mockUser.full_name,
+        avatar: null,
+        is_verified: false,
+        auth_provider: undefined,
+        created_at: undefined,
       });
     });
   });
@@ -144,6 +148,10 @@ describe('UNIT TESTS: AUTH SERVICE LOGIC', () => {
         id: mockUser._id,
         email: mockUser.email,
         full_name: mockUser.full_name,
+        avatar: null,
+        is_verified: false,
+        auth_provider: 'local',
+        created_at: undefined,
       });
       expect(mockUser.comparePassword).toHaveBeenCalledWith(password);
     });
