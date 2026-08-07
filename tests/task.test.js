@@ -11,9 +11,13 @@ const JWT_ACCESS_SECRET =
 describe('Task Endpoints (/api/v1/workspaces/:workspaceId/tasks & /api/v1/tasks)', () => {
   const userId = '65c2b3f12a83f819001aaaaa';
   const workspaceId = '65c2b3f12a83f819001bbbbb';
-  const token = jwt.sign({ id: userId, email: 'user@example.com' }, JWT_ACCESS_SECRET, {
-    expiresIn: '15m',
-  });
+  const token = jwt.sign(
+    { id: userId, email: 'user@example.com' },
+    JWT_ACCESS_SECRET,
+    {
+      expiresIn: '15m',
+    }
+  );
 
   const mockUser = {
     _id: userId,
