@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
-import { User, Otp } from '../models/index.js';
+import { User, Workspace, Task, Otp } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
 import {
   getRegisterEmailTemplate,
@@ -170,40 +170,43 @@ export const completeRegister = async (registrationToken, password) => {
     is_verified: true,
   });
 
-  // const workspace = await Workspace.create({
-  //   name: 'Workspace 1',
-  //   user_id: user._id,
-  // });
+  // Initialize default onboarding workspace & sample tasks
+  const workspace = await Workspace.create({
+    name: 'Workspace 1',
+    user_id: user._id,
+  });
 
-  // const defaultTasks = [
-  //   {
-  //     workspace_id: workspace._id,
-  //     user_id: user._id,
-  //     title: 'Welcome to FocusFlow! 🚀',
-  //     description:
-  //       'This is your workspace. Try starting a Pomodoro session for this task.',
-  //     status: 'TO_DO',
-  //     order: 0,
-  //   },
-  //   {
-  //     workspace_id: workspace._id,
-  //     user_id: user._id,
-  //     title: 'Working with Kanban Board 📋',
-  //     description:
-  //       'Drag and drop task cards between columns (Backlog, To Do, In Progress, Done) to update task status.',
-  //     status: 'TO_DO',
-  //     order: 1,
-  //   },
-  //   {
-  //     workspace_id: workspace._id,
-  //     user_id: user._id,
-  //     title: 'Focus with Pomodoro Timer ⏱️',
-  //     description:
-  //       'Click the Pomodoro icon to start a 25-minute focus session. System automatically tracks your progress.',
-  //     status: 'TO_DO',
-  //     order: 2,
-  //   },
-  // ];
+  const defaultTasks = [
+    {
+      workspace_id: workspace._id,
+      user_id: user._id,
+      title: 'Welcome to FocusFlow! 🚀',
+      description:
+        'This is your workspace. Try starting a Pomodoro session for this task.',
+      status: 'TO_DO',
+      order: 0,
+    },
+    {
+      workspace_id: workspace._id,
+      user_id: user._id,
+      title: 'Working with Kanban Board 📋',
+      description:
+        'Drag and drop task cards between columns (Backlog, To Do, In Progress, Done) to update task status.',
+      status: 'TO_DO',
+      order: 1,
+    },
+    {
+      workspace_id: workspace._id,
+      user_id: user._id,
+      title: 'Focus with Pomodoro Timer ⏱️',
+      description:
+        'Click the Pomodoro icon to start a 25-minute focus session. System automatically tracks your progress.',
+      status: 'IN_PROGRESS',
+      order: 0,
+    },
+  ];
+
+  await Task.create(defaultTasks);
 
   const { accessToken, refreshToken } = generateTokens(user);
 
