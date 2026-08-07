@@ -27,7 +27,11 @@ router.patch(
 );
 
 // Workspace Tasks Endpoints
-router.get('/:workspaceId/tasks', authMiddleware, taskController.getWorkspaceTasks);
+router.get(
+  '/:workspaceId/tasks',
+  authMiddleware,
+  taskController.getWorkspaceTasks
+);
 router.post(
   '/:workspaceId/tasks',
   authMiddleware,
