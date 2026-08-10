@@ -25,4 +25,10 @@ router.patch(
   taskController.updateTaskDetail
 );
 
+// Get Single Task Detail
+router.get('/:taskId', authMiddleware, taskController.getTaskById);
+
+// Delete Task (Soft Delete)
+router.delete('/:taskId', authMiddleware, taskController.deleteTask);
+
 export default router;
