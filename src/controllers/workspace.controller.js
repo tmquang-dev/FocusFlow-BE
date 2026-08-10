@@ -50,3 +50,17 @@ export const getWorkspaces = catchAsync(async (req, res) => {
     },
   });
 });
+
+/**
+ * Delete Workspace (DELETE /api/v1/workspaces/:workspaceId)
+ */
+export const deleteWorkspace = catchAsync(async (req, res) => {
+  const { workspaceId } = req.params;
+  await workspaceService.deleteWorkspace(req.user._id, workspaceId);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Workspace deleted successfully.',
+  });
+});
+

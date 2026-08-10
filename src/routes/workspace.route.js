@@ -25,6 +25,11 @@ router.patch(
   validate(renameWorkspaceSchema),
   workspaceController.renameWorkspace
 );
+router.delete(
+  '/:workspaceId',
+  authMiddleware,
+  workspaceController.deleteWorkspace
+);
 
 // Workspace Tasks Endpoints
 router.get(

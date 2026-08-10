@@ -1,4 +1,4 @@
-import { Workspace } from '../models/index.js';
+import { Workspace, Task, Counter } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
 
 /**
@@ -57,4 +57,24 @@ export const getWorkspaces = async (userId) => {
   });
 
   return workspaces.map(formatWorkspace);
+};
+
+/**
+ * Delete a Workspace and mark associated tasks as deleted
+ * @param {string} userId
+ * @param {string} workspaceId
+ */
+export const deleteWorkspace = async (userId, workspaceId) => {
+  const workspace = await Workspace.findOne({
+    _id: workspaceId,
+    user_id: userId,
+  });
+
+  if (!workspace) {
+    throw new ApiError(404, 'WORKSPACE_NOT_FOUND', 'Workspace not found.');
+  }
+
+  await Task.updateMany({ workspace_id: workspaceId }, { is_deleted: true });
+  await Counter.deleteOne({ _id: workspaceId });
+  await Workspace.deleteOne({ _id: workspaceId });
 };

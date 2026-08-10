@@ -3,7 +3,7 @@ import { describe, afterEach, it, expect, jest } from '@jest/globals';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
-import { Workspace, User } from '../src/models/index.js';
+import { Workspace, Task, Counter, User } from '../src/models/index.js';
 
 const JWT_ACCESS_SECRET =
   process.env.JWT_ACCESS_SECRET || 'main_access_secret_key';
@@ -110,6 +110,32 @@ describe('Workspace Endpoints (/api/v1/workspaces)', () => {
 
       expect(res.status).toBe(404);
       expect(res.body.code).toBe('WORKSPACE_NOT_FOUND');
+    });
+  });
+
+  describe('DELETE /api/v1/workspaces/:workspaceId', () => {
+    it('nên xóa workspace thành công', async () => {
+      const mockWorkspace = {
+        _id: '65c2b3f12a83f819001bbbbb',
+        name: 'Dự án Cũ',
+        user_id: userId,
+      };
+
+      jest.spyOn(User, 'findById').mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUser),
+      });
+      jest.spyOn(Workspace, 'findOne').mockResolvedValue(mockWorkspace);
+      jest.spyOn(Task, 'updateMany').mockResolvedValue({ modifiedCount: 1 });
+      jest.spyOn(Counter, 'deleteOne').mockResolvedValue({ deletedCount: 1 });
+      jest.spyOn(Workspace, 'deleteOne').mockResolvedValue({ deletedCount: 1 });
+
+      const res = await request(app)
+        .delete('/api/v1/workspaces/65c2b3f12a83f819001bbbbb')
+        .set('Cookie', [`access_token=${token}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.message).toBe('Workspace deleted successfully.');
     });
   });
 });
