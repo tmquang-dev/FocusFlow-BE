@@ -73,3 +73,31 @@ export const updateTaskDetail = catchAsync(async (req, res) => {
     },
   });
 });
+
+/**
+ * Delete Task (DELETE /api/v1/tasks/:taskId)
+ */
+export const deleteTask = catchAsync(async (req, res) => {
+  const { taskId } = req.params;
+  await taskService.deleteTask(req.user._id, taskId);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Task deleted successfully.',
+  });
+});
+
+/**
+ * Get single Task detail (GET /api/v1/tasks/:taskId)
+ */
+export const getTaskById = catchAsync(async (req, res) => {
+  const { taskId } = req.params;
+  const task = await taskService.getTaskById(req.user._id, taskId);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      task,
+    },
+  });
+});

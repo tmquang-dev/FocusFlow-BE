@@ -128,3 +128,42 @@ export const updateTaskDetail = async (userId, taskId, updates) => {
 
   return formatTask(task);
 };
+
+/**
+ * Delete a task (soft delete)
+ * @param {string} userId
+ * @param {string} taskId
+ */
+export const deleteTask = async (userId, taskId) => {
+  const task = await Task.findOne({
+    _id: taskId,
+    user_id: userId,
+    is_deleted: false,
+  });
+
+  if (!task) {
+    throw new ApiError(404, 'TASK_NOT_FOUND', 'Task not found.');
+  }
+
+  task.is_deleted = true;
+  await task.save();
+};
+
+/**
+ * Get single task detail by ID
+ * @param {string} userId
+ * @param {string} taskId
+ */
+export const getTaskById = async (userId, taskId) => {
+  const task = await Task.findOne({
+    _id: taskId,
+    user_id: userId,
+    is_deleted: false,
+  });
+
+  if (!task) {
+    throw new ApiError(404, 'TASK_NOT_FOUND', 'Task not found.');
+  }
+
+  return formatTask(task);
+};
