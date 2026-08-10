@@ -63,4 +63,3 @@ export const deleteWorkspace = catchAsync(async (req, res) => {
     message: 'Workspace deleted successfully.',
   });
 });
-
