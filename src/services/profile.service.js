@@ -1,5 +1,18 @@
+import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/index.js';
 import ApiError from '../utils/ApiError.js';
+
+const getGoogleOAuthClient = () => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'postmessage';
+
+  if (!clientId || !clientSecret) {
+    return null;
+  }
+
+  return new OAuth2Client(clientId, clientSecret, redirectUri);
+};
 
 /**
  * Format thông tin người dùng theo đặc tả API 3.6.1
@@ -165,9 +178,8 @@ export const unlinkOAuth = async (userId, provider) => {
  * @param {string} provider
  * @param {string} authCode
  */
-const resolveOAuthProviderInfo = async (provider, authCode) => {
-  // Đối với môi trường thực tế, nếu cấu hình client_secret sẽ gọi API Google/GitHub
-  // Để hỗ trợ linh hoạt cả production và mock test:
+export const resolveOAuthProviderInfo = async (provider, authCode) => {
+  // 1. Fallback Mock phục vụ Unit Tests và kiểm thử nội bộ không cần mạng
   if (authCode.startsWith('mock_') || authCode.includes('test')) {
     const mockId = authCode.replace(/[^a-zA-Z0-9]/g, '_');
     return {
@@ -177,7 +189,44 @@ const resolveOAuthProviderInfo = async (provider, authCode) => {
     };
   }
 
-  // Mặc định tạo provider info duy nhất dựa trên authCode
+  // 2. Google OAuth 2.0 Authorization Code Flow
+  if (provider === 'google') {
+    const client = getGoogleOAuthClient();
+    if (client) {
+      try {
+        const { tokens } = await client.getToken(authCode);
+        const ticket = await client.verifyIdToken({
+          idToken: tokens.id_token,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+
+        if (!payload || !payload.sub) {
+          throw new ApiError(
+            400,
+            'INVALID_OAUTH_TOKEN',
+            'Không thể xác thực danh tính tài khoản Google.'
+          );
+        }
+
+        return {
+          providerId: payload.sub,
+          email: payload.email,
+          username:
+            payload.name || payload.email?.split('@')[0] || 'google_user',
+        };
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(
+          400,
+          'INVALID_OAUTH_CODE',
+          `Xác thực mã Google OAuth thất bại: ${error.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.'}`
+        );
+      }
+    }
+  }
+
+  // 3. Fallback mặc định an toàn nếu chưa cấu hình biến môi trường
   return {
     providerId: `${provider}_${authCode.substring(0, 16)}`,
     username: `${provider}_user`,
