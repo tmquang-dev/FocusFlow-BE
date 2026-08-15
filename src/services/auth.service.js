@@ -6,6 +6,7 @@ import {
   getRegisterEmailTemplate,
   getForgotPasswordEmailTemplate,
 } from '../utils/emailTemplates.js';
+import { resolveOAuthProviderInfo } from './profile.service.js';
 
 const getResendClient = () =>
   process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -408,4 +409,108 @@ export const resetPassword = async (resetToken, password) => {
 
   user.password_hash = password;
   await user.save();
+};
+
+/**
+ * Handle Google Login / Registration via auth_code
+ * @param {string} authCode
+ * @returns {Promise<object>} { accessToken, refreshToken, user }
+ */
+export const googleAuth = async (authCode) => {
+  const { providerId, email, username } = await resolveOAuthProviderInfo(
+    'google',
+    authCode
+  );
+
+  let user = await User.findOne({
+    $or: [
+      { email },
+      { 'social_links.google.provider_id': providerId },
+      { provider_id: providerId, auth_provider: 'google' },
+    ],
+  });
+
+  if (!user) {
+    // Tạo tài khoản người dùng mới qua Google
+    user = await User.create({
+      email,
+      full_name: username || email.split('@')[0],
+      auth_provider: 'google',
+      provider_id: providerId,
+      is_verified: true,
+      social_links: {
+        github: { provider_id: null, username: null },
+        google: {
+          provider_id: providerId,
+          email,
+          username: username || email,
+        },
+      },
+    });
+
+    // Khởi tạo workspace mặc định & các task onboarding
+    const workspace = await Workspace.create({
+      name: 'Workspace 1',
+      user_id: user._id,
+    });
+
+    const defaultTasks = [
+      {
+        workspace_id: workspace._id,
+        user_id: user._id,
+        title: 'Welcome to FocusFlow! 🚀',
+        description:
+          'This is your workspace. Try starting a Pomodoro session for this task.',
+        status: 'TO_DO',
+        order: 0,
+      },
+      {
+        workspace_id: workspace._id,
+        user_id: user._id,
+        title: 'Working with Kanban Board 📋',
+        description:
+          'Drag and drop task cards between columns (Backlog, To Do, In Progress, Done) to update task status.',
+        status: 'TO_DO',
+        order: 1,
+      },
+      {
+        workspace_id: workspace._id,
+        user_id: user._id,
+        title: 'Focus with Pomodoro Timer ⏱️',
+        description:
+          'Click the Pomodoro icon to start a 25-minute focus session. System automatically tracks your progress.',
+        status: 'IN_PROGRESS',
+        order: 0,
+      },
+    ];
+
+    await Task.create(defaultTasks);
+  } else {
+    // Cập nhật thông tin Google vào social_links nếu chưa có
+    if (!user.social_links) {
+      user.social_links = {
+        github: { provider_id: null, username: null },
+        google: { provider_id: null, email: null, username: null },
+      };
+    }
+    if (!user.social_links.google) {
+      user.social_links.google = {
+        provider_id: null,
+        email: null,
+        username: null,
+      };
+    }
+    user.social_links.google.provider_id = providerId;
+    user.social_links.google.email = email;
+    user.social_links.google.username = username || email;
+    await user.save();
+  }
+
+  const { accessToken, refreshToken } = generateTokens(user);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: formatUser(user),
+  };
 };

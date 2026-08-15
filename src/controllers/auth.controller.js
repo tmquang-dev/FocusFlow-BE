@@ -217,3 +217,29 @@ export const resetPassword = catchAsync(async (req, res) => {
       'Your password has been updated successfully. Please log in again.',
   });
 });
+
+/**
+ * Handle Google Login / Register OAuth
+ */
+export const googleAuth = catchAsync(async (req, res) => {
+  const { auth_code } = req.body;
+  const result = await authService.googleAuth(auth_code);
+
+  res.cookie('access_token', result.accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie('refresh_token', result.refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    },
+  });
+});
