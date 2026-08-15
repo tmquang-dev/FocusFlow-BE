@@ -20,7 +20,8 @@ export const unlinkOAuthSchema = z.object({
   body: z.object({
     provider: z.enum(['github', 'google'], {
       errorMap: () => ({
-        message: "Nhà cung cấp OAuth không hợp lệ (chỉ hỗ trợ 'github' hoặc 'google')",
+        message:
+          "Nhà cung cấp OAuth không hợp lệ (chỉ hỗ trợ 'github' hoặc 'google')",
       }),
     }),
   }),
@@ -30,7 +31,8 @@ export const linkOAuthSchema = z.object({
   body: z.object({
     provider: z.enum(['github', 'google'], {
       errorMap: () => ({
-        message: "Nhà cung cấp OAuth không hợp lệ (chỉ hỗ trợ 'github' hoặc 'google')",
+        message:
+          "Nhà cung cấp OAuth không hợp lệ (chỉ hỗ trợ 'github' hoặc 'google')",
       }),
     }),
     auth_code: z.string().min(1, 'Mã xác thực auth_code là bắt buộc'),

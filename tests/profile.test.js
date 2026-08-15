@@ -369,9 +369,7 @@ describe('Profile & OAuth Endpoints (/api/v1/profile)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
-      expect(res.body.message).toBe(
-        'Đã liên kết tài khoản Google thành công.'
-      );
+      expect(res.body.message).toBe('Đã liên kết tài khoản Google thành công.');
       expect(mockUserDoc.social_links.google.provider_id).toBeDefined();
       expect(mockUserDoc.save).toHaveBeenCalled();
     });
