@@ -165,4 +165,56 @@ describe('Task Endpoints (/api/v1/workspaces/:workspaceId/tasks & /api/v1/tasks)
       expect(res.body.data.task.status).toBe('DONE');
     });
   });
+
+  describe('DELETE /api/v1/tasks/:taskId', () => {
+    it('nếu xóa task thành công (soft delete)', async () => {
+      const mockTask = {
+        _id: '65c2b3f12a83f819001abcd3',
+        is_deleted: false,
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      jest.spyOn(User, 'findById').mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUser),
+      });
+      jest.spyOn(Task, 'findOne').mockResolvedValue(mockTask);
+
+      const res = await request(app)
+        .delete('/api/v1/tasks/65c2b3f12a83f819001abcd3')
+        .set('Cookie', [`access_token=${token}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.message).toBe('Task deleted successfully.');
+      expect(mockTask.is_deleted).toBe(true);
+    });
+  });
+
+  describe('GET /api/v1/tasks/:taskId', () => {
+    it('nên lấy thông tin chi tiết của 1 Task theo ID thành công', async () => {
+      const mockTask = {
+        _id: '65c2b3f12a83f819001abcd3',
+        task_num: 5,
+        title: 'Thiết kế giao diện Task Modal',
+        description: 'Chi tiết mô tả task modal',
+        status: 'IN_PROGRESS',
+        order: 0,
+        createdAt: new Date(),
+      };
+
+      jest.spyOn(User, 'findById').mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUser),
+      });
+      jest.spyOn(Task, 'findOne').mockResolvedValue(mockTask);
+
+      const res = await request(app)
+        .get('/api/v1/tasks/65c2b3f12a83f819001abcd3')
+        .set('Cookie', [`access_token=${token}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data.task.task_num).toBe(5);
+      expect(res.body.data.task.title).toBe('Thiết kế giao diện Task Modal');
+    });
+  });
 });

@@ -54,15 +54,29 @@ taskSchema.index({ workspace_id: 1, task_num: 1 }, { unique: true });
 
 // Pre-save hook to automatically assign incremented task_num for new tasks
 taskSchema.pre('save', async function () {
-  if (!this.isNew) {
+  if (!this.isNew || this.task_num != null) {
     return;
   }
 
-  const counter = await Counter.findByIdAndUpdate(
-    this.workspace_id,
-    { $inc: { seq_value: 1 } },
-    { new: true, upsert: true }
-  );
+  let counter;
+  try {
+    counter = await Counter.findByIdAndUpdate(
+      this.workspace_id,
+      { $inc: { seq_value: 1 } },
+      { returnDocument: 'after', upsert: true }
+    );
+  } catch (err) {
+    if (err.code === 11000) {
+      counter = await Counter.findByIdAndUpdate(
+        this.workspace_id,
+        { $inc: { seq_value: 1 } },
+        { returnDocument: 'after', upsert: true }
+      );
+    } else {
+      throw err;
+    }
+  }
+
   this.task_num = counter.seq_value;
 });
 
