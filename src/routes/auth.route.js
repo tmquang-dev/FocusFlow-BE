@@ -7,6 +7,7 @@ import {
   completeRegisterSchema,
   loginSchema,
   googleAuthSchema,
+  githubAuthSchema,
   forgotPasswordSchema,
   verifyPasswordOtpSchema,
   resetPasswordSchema,
@@ -45,6 +46,7 @@ router.post(
 
 router.post('/login', validate(loginSchema), authController.login);
 router.post('/google', validate(googleAuthSchema), authController.googleAuth);
+router.post('/github', validate(githubAuthSchema), authController.githubAuth);
 router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 

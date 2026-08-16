@@ -36,6 +36,36 @@ Tài liệu đặc tả chi tiết toàn bộ hệ thống API của FocusFlow B
   ```
 - **Cookies Set:** `access_token` (15 phút), `refresh_token` (7 ngày).
 
+### 1.2. Đăng nhập / Đăng ký trực tiếp bằng GitHub OAuth 2.0
+
+- **Method & URL:** `POST /api/v1/auth/github`
+- **Headers:** `Content-Type: application/json`
+- **Payload:**
+  ```json
+  {
+    "auth_code": "gh_oauth_code_123456..."
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "user": {
+        "id": "65c2b3f12a83f819001aaaaa",
+        "email": "lam_dev@github.com",
+        "full_name": "lam_dev",
+        "avatar_url": "https://avatars.githubusercontent.com/u/...",
+        "is_verified": true,
+        "auth_provider": "github"
+      },
+      "accessToken": "eyJhbGciOi...",
+      "refreshToken": "eyJhbGciOi..."
+    }
+  }
+  ```
+- **Cookies Set:** `access_token` (15 phút), `refresh_token` (7 ngày).
+
 ---
 
 ## 2. Quản lý Hồ sơ & OAuth (`/api/v1/profile`)

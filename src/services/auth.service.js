@@ -514,3 +514,104 @@ export const googleAuth = async (authCode) => {
     user: formatUser(user),
   };
 };
+
+/**
+ * Handle GitHub Login / Registration via auth_code
+ * @param {string} authCode
+ * @returns {Promise<object>} { accessToken, refreshToken, user }
+ */
+export const githubAuth = async (authCode) => {
+  const { providerId, email, username, avatarUrl } =
+    await resolveOAuthProviderInfo('github', authCode);
+
+  let user = await User.findOne({
+    $or: [
+      { email },
+      { 'social_links.github.provider_id': providerId },
+      { provider_id: providerId, auth_provider: 'github' },
+    ],
+  });
+
+  if (!user) {
+    // Tạo tài khoản người dùng mới qua GitHub
+    user = await User.create({
+      email,
+      full_name: username || email.split('@')[0],
+      avatar_url: avatarUrl || null,
+      auth_provider: 'github',
+      provider_id: providerId,
+      is_verified: true,
+      social_links: {
+        github: {
+          provider_id: providerId,
+          username: username || 'github_user',
+        },
+        google: { provider_id: null, email: null, username: null },
+      },
+    });
+
+    // Khởi tạo workspace mặc định & các task onboarding
+    const workspace = await Workspace.create({
+      name: 'Workspace 1',
+      user_id: user._id,
+    });
+
+    const defaultTasks = [
+      {
+        workspace_id: workspace._id,
+        user_id: user._id,
+        title: 'Welcome to FocusFlow! 🚀',
+        description:
+          'This is your workspace. Try starting a Pomodoro session for this task.',
+        status: 'TO_DO',
+        order: 0,
+      },
+      {
+        workspace_id: workspace._id,
+        user_id: user._id,
+        title: 'Working with Kanban Board 📋',
+        description:
+          'Drag and drop task cards between columns (Backlog, To Do, In Progress, Done) to update task status.',
+        status: 'TO_DO',
+        order: 1,
+      },
+      {
+        workspace_id: workspace._id,
+        user_id: user._id,
+        title: 'Focus with Pomodoro Timer ⏱️',
+        description:
+          'Click the Pomodoro icon to start a 25-minute focus session. System automatically tracks your progress.',
+        status: 'IN_PROGRESS',
+        order: 0,
+      },
+    ];
+
+    await Task.create(defaultTasks);
+  } else {
+    // Cập nhật thông tin GitHub vào social_links nếu chưa có
+    if (!user.social_links) {
+      user.social_links = {
+        github: { provider_id: null, username: null },
+        google: { provider_id: null, email: null, username: null },
+      };
+    }
+    if (!user.social_links.github) {
+      user.social_links.github = {
+        provider_id: null,
+        username: null,
+      };
+    }
+    user.social_links.github.provider_id = providerId;
+    user.social_links.github.username =
+      username || user.social_links.github.username || 'github_user';
+    await user.save();
+  }
+
+  const { accessToken, refreshToken } = generateTokens(user);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: formatUser(user),
+  };
+};
