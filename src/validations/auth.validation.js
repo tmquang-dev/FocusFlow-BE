@@ -57,3 +57,9 @@ export const googleAuthSchema = z.object({
     auth_code: z.string().min(1, 'Mã xác thực auth_code là bắt buộc'),
   }),
 });
+
+export const githubAuthSchema = z.object({
+  body: z.object({
+    auth_code: z.string().min(1, 'Mã xác thực auth_code là bắt buộc'),
+  }),
+});
