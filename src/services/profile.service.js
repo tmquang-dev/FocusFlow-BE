@@ -226,7 +226,107 @@ export const resolveOAuthProviderInfo = async (provider, authCode) => {
     }
   }
 
-  // 3. Fallback mặc định an toàn nếu chưa cấu hình biến môi trường
+  // 3. GitHub OAuth 2.0 Authorization Code Flow
+  if (provider === 'github') {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    if (clientId && clientSecret) {
+      try {
+        // Gửi yêu cầu đổi access_token với GitHub OAuth server
+        const tokenResponse = await fetch(
+          'https://github.com/login/oauth/access_token',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              client_id: clientId,
+              client_secret: clientSecret,
+              code: authCode,
+            }),
+          }
+        );
+
+        const tokenData = await tokenResponse.json();
+        if (tokenData.error || !tokenData.access_token) {
+          throw new ApiError(
+            400,
+            'INVALID_OAUTH_CODE',
+            `Xác thực mã GitHub OAuth thất bại: ${tokenData.error_description || tokenData.error || 'Mã xác thực không hợp lệ hoặc đã hết hạn.'}`
+          );
+        }
+
+        // Lấy thông tin user từ GitHub API
+        const userResponse = await fetch('https://api.github.com/user', {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+            'User-Agent': 'FocusFlow-BE',
+          },
+        });
+        const userData = await userResponse.json();
+
+        if (!userData || !userData.id) {
+          throw new ApiError(
+            400,
+            'INVALID_OAUTH_TOKEN',
+            'Không thể lấy thông tin tài khoản GitHub.'
+          );
+        }
+
+        let email = userData.email;
+
+        // Nếu email để private trên GitHub, gọi thêm API lấy email xác thực chính
+        if (!email) {
+          try {
+            const emailsResponse = await fetch(
+              'https://api.github.com/user/emails',
+              {
+                headers: {
+                  Authorization: `Bearer ${tokenData.access_token}`,
+                  'User-Agent': 'FocusFlow-BE',
+                },
+              }
+            );
+            const emailsData = await emailsResponse.json();
+            if (Array.isArray(emailsData)) {
+              const primaryEmail =
+                emailsData.find((e) => e.primary && e.verified) ||
+                emailsData.find((e) => e.verified) ||
+                emailsData[0];
+              if (primaryEmail) {
+                email = primaryEmail.email;
+              }
+            }
+          } catch {
+            // Bỏ qua lỗi phụ nếu không lấy được email từ endpoint phụ
+          }
+        }
+
+        if (!email) {
+          email = `${userData.login}@users.noreply.github.com`;
+        }
+
+        return {
+          providerId: String(userData.id),
+          username: userData.login,
+          email,
+          avatarUrl: userData.avatar_url,
+        };
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(
+          400,
+          'INVALID_OAUTH_CODE',
+          `Xác thực GitHub OAuth thất bại: ${error.message || 'Lỗi kết nối tới GitHub API.'}`
+        );
+      }
+    }
+  }
+
+  // 4. Fallback mặc định an toàn nếu chưa cấu hình biến môi trường
   return {
     providerId: `${provider}_${authCode.substring(0, 16)}`,
     username: `${provider}_user`,

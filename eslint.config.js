@@ -72,6 +72,14 @@ export default [
       // "security/detect-object-injection" thường báo lỗi giả (false positive) khá nhiều
       // khi bạn truy cập object bằng key dạng chuỗi. Bạn có thể hạ cấp xuống "warn" hoặc "off"
       'security/detect-object-injection': 'warn',
+
+      // 5.6. Cho phép sử dụng Fetch API chuẩn trong Node.js hiện đại
+      'n/no-unsupported-features/node-builtins': [
+        'error',
+        {
+          ignores: ['fetch'],
+        },
+      ],
     },
   },
 
