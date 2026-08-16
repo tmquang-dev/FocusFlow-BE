@@ -298,4 +298,44 @@ describe('INTEGRATION TESTS: AUTH FLOWS', () => {
       );
     });
   });
+
+  // ==========================================
+  // GOOGLE AUTH FLOW
+  // ==========================================
+  describe('Đăng nhập / Đăng ký qua Google (POST /api/v1/auth/google)', () => {
+    it('Google Auth: Đăng ký / Đăng nhập thành công với auth_code hợp lệ', async () => {
+      const mockCreatedUser = {
+        _id: '65c2b3f12a83f819001aaaaa',
+        email: 'google_user_mock@gmail.com',
+        full_name: 'Google User',
+        auth_provider: 'google',
+        is_verified: true,
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      jest.spyOn(User, 'findOne').mockResolvedValue(null);
+      jest.spyOn(User, 'create').mockResolvedValue(mockCreatedUser);
+      jest
+        .spyOn(Workspace, 'create')
+        .mockResolvedValue({ _id: 'workspace_id' });
+      jest.spyOn(Task, 'create').mockResolvedValue([]);
+
+      const res = await request(app)
+        .post('/api/v1/auth/google')
+        .send({ auth_code: 'mock_google_auth_code_999' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data.user).toBeDefined();
+      expect(res.body.data.user.email).toBe('google_user_mock@gmail.com');
+      expect(res.body.data.accessToken).toBeDefined();
+    });
+
+    it('Google Auth: Trả về lỗi 400 nếu thiếu auth_code', async () => {
+      const res = await request(app).post('/api/v1/auth/google').send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('VALIDATION_ERROR');
+    });
+  });
 });
